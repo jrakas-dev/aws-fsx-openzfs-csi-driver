@@ -22,13 +22,14 @@ ARG TARGETARCH
 RUN OS=$TARGETOS ARCH=$TARGETARCH make $TARGETOS/$TARGETARCH
 
 # https://github.com/aws/eks-distro-build-tooling/blob/main/eks-distro-base/Dockerfile.minimal-base-csi-ebs#L36
-FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-base-csi-ebs-builder:latest-al23 as rpm-installer
+FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-base-csi-ebs-builder:latest-al23 AS rpm-installer
 
 RUN set -x && \
+      clean_install "openssl openssl-libs" true && \
       install_binary /sbin/mount.nfs /sbin/umount.nfs && \
                      cleanup "fsx-openzfs-csi"
 
-FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-base-csi-ebs:latest-al2 AS linux-amazon
+FROM public.ecr.aws/eks-distro-build-tooling/eks-distro-minimal-base-csi-ebs:latest-al23 AS linux-amazon
 COPY --from=rpm-installer /newroot /
 COPY --from=go-builder /go/src/github.com/kubernetes-sigs/aws-fsx-openzfs-csi-driver/bin/aws-fsx-openzfs-csi-driver /bin/aws-fsx-openzfs-csi-driver
 ENTRYPOINT ["/bin/aws-fsx-openzfs-csi-driver"]
