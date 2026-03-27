@@ -19,10 +19,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"strconv"
-	"strings"
-
 	"github.com/aws/aws-sdk-go-v2/service/fsx/types"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/kubernetes-sigs/aws-fsx-openzfs-csi-driver/pkg/cloud"
@@ -32,6 +28,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"k8s.io/klog/v2"
+	"os"
+	"strconv"
+	"strings"
 )
 
 var (
@@ -370,18 +369,6 @@ func (d *controllerService) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return nil, status.Errorf(codes.Internal, "Could not delete volume ID %q: %v", volumeID, err)
 	}
 
-	switch splitVolumeId[0] {
-	case cloud.FilesystemPrefix:
-		err = d.cloud.WaitForFileSystemDeletion(ctx, volumeID)
-	case cloud.VolumePrefix:
-		err = d.cloud.WaitForVolumeDeletion(ctx, volumeID)
-	}
-
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Could not delete volume ID %q: %v", volumeID, err)
-	}
-
-	klog.V(4).InfoS("DeleteVolume: volume not found, returning with success", "volumeId", volumeID)
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
